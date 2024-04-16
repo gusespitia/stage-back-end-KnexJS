@@ -1,15 +1,10 @@
-// Cargar las variables de entorno desde el archivo .env
-import dotenv from "dotenv";
-dotenv.config();
-
-// Obtener la URL del archivo actual
+// knexfile.js
 import { fileURLToPath } from "url";
 import { dirname } from "path";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// knexfile.js
 const knexConfig = {
   development: {
     client: "mysql",
@@ -38,4 +33,4 @@ const knexConfig = {
   },
 };
 
-export { knexConfig };
+export default knexConfig;

@@ -1,8 +1,9 @@
-import { NODE_ENV } from 'process';
-import knexConfig from "../knexfile";
-
-const environment = NODE_ENV !== "development";
+import knexConfig from "../knexfile.js";
+const { NODE_ENV } = process.env;
+const environment = NODE_ENV || "development";
 const config = knexConfig[environment];
 
-export default require("knex")(config);
+import knex from "knex";
+const db = knex(config);
 
+export default db;

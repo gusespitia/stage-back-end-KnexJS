@@ -1,5 +1,4 @@
 import express from "express";
-import bodyParser from "body-parser";
 import { getAllTodos, getTodoById, postTodo } from "./queries.js"; // Import query functions
 import fetch from "node-fetch"; // Importa fetch si no lo has hecho ya
 import dotenv from "dotenv"; // Importa dotenv para cargar variables de entorno
@@ -101,8 +100,8 @@ async function updateUserRoles(userId, rolesToUpdate) {
 }
 
 // Ejemplo de uso
-const userId = 2; // ID del usuario que deseas actualizar
-const rolesToUpdate = ["admin", "student"]; // Nuevos roles a asignar
+const userId = 4; // ID del usuario que deseas actualizar
+const rolesToUpdate = ["student"]; // Nuevos roles a asignar
 
 try {
   const response = await updateUserRoles(userId, rolesToUpdate);

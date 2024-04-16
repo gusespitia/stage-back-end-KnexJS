@@ -1,7 +1,7 @@
 // queries.js
 
 import knex from "knex";
-import { knexConfig } from "./knexfile.js";
+import knexConfig from "./knexfile.js";
 
 // Create a Knex instance
 const db = knex(knexConfig["development"]);
