@@ -8,13 +8,6 @@ dotenv.config(); // Carga las variables de entorno desde el archivo .env si exis
 const port = process.env.PORT || 8010;
 const app = express();
 
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
-
-// Ruta para obtener información del usuario desde Frontuser
-// Middleware para parsear JSON
-app.use(express.json());
-
 // Ruta para obtener información del usuario desde Frontuser
 app.get("/frontuser/:userId", async (req, res) => {
   const userId = req.params.userId;
@@ -82,3 +75,38 @@ app.get("/todos/:id", async (req, res) => {
 app.listen(port, () => {
   console.log(`Listening on port: ${port}`);
 });
+
+// Función para actualizar el rol del usuario en Userfront
+async function updateUserRoles(userId, rolesToUpdate) {
+  try {
+    const url = `https://api.userfront.com/v0/tenants/vbqwm45b/users/${userId}/roles`;
+
+    const response = await fetch(url, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization:
+          "Bearer uf_test_admin_xbpwd96n_c9a7bff77e3d3552fca270f56c9b50ea",
+      },
+      body: JSON.stringify({ roles: rolesToUpdate }),
+    });
+
+    const responseData = await response.json();
+    console.log(responseData);
+    return responseData;
+  } catch (error) {
+    console.error("Error updating user roles in Userfront:", error);
+    throw new Error("Error updating user roles in Userfront");
+  }
+}
+
+// Ejemplo de uso
+const userId = 2; // ID del usuario que deseas actualizar
+const rolesToUpdate = ["admin", "student"]; // Nuevos roles a asignar
+
+try {
+  const response = await updateUserRoles(userId, rolesToUpdate);
+  console.log(response);
+} catch (error) {
+  console.error("Error updating user roles:", error);
+}
