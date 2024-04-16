@@ -1,0 +1,6 @@
+DB_HOST=xxxxxxxxxxxxxxxxxxxxxxxxx
+DB_USER=xxxxxxxxxxxxxxxxxxxxxxxxx
+DB_PASSWORD=xxxxxxxxxxxxxxxxxxxxxxxxx
+DB_NAME=xxxxxxxxxxxxxxxxxxxxxxxxx
+
+FRONTUSER_API_TOKEN=xxxxxxxxxxxxxxxxxxxxxxxxx
