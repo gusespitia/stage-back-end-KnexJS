@@ -20,16 +20,16 @@ app.use(
     origin: "http://localhost:5173",
   })
 );
-// Configurar el middleware CORS para permitir solicitudes desde http://localhost:5173
-// Middleware para habilitar CORS
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "*"); // Permitir solicitudes desde cualquier origen
-  res.header(
-    "Access-Control-Allow-Headers",
-    "Origin, X-Requested-With, Content-Type, Accept"
-  );
-  next();
-});
+// // Configurar el middleware CORS para permitir solicitudes desde http://localhost:5173
+// // Middleware para habilitar CORS
+// app.use((req, res, next) => {
+//   res.header("Access-Control-Allow-Origin", "*"); // Permitir solicitudes desde cualquier origen
+//   res.header(
+//     "Access-Control-Allow-Headers",
+//     "Origin, X-Requested-With, Content-Type, Accept"
+//   );
+//   next();
+// });
 const dbConfig = {
   host: "ID396978_reactApp.db.webhosting.be",
   user: "ID396978_reactApp",
