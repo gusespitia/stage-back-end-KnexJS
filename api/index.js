@@ -6,7 +6,13 @@ import cors from "cors"; // Importa el middleware cors
 import path from "path"; // Importa el mÃ³dulo path
 import multer from "multer"; // Importa multer para el almacenamiento de archivos
 import { getUsers } from "./userController.js";
-import { getAllTodos, getTodoById, postTodo } from "./queries.js";
+import {
+  getAllTodos,
+  getTodoById,
+  postTodo,
+  getAllPostsByUserId,
+  createPost,
+} from "./queries.js";
 
 const app = express();
 const PORT = process.env.PORT || 8020;
@@ -385,6 +391,36 @@ const upload = multer({ storage: storage });
 app.post("/upload", upload.single("image"), (req, res) => {
   const imageUrl = "/images/" + req.file.filename;
   res.json({ imageUrl: imageUrl });
+});
+
+// Ruta para obtener todos los posts de un usuario por ID
+app.get("/users/posts/:userId", async (req, res) => {
+  try {
+    const userId = req.params.userId; // Obtiene el ID del usuario de los parámetros de la URL
+    const posts = await getAllPostsByUserId(userId); // Llama a la función para obtener todos los posts de un usuario por ID
+    res.json(posts); // Devuelve los posts como respuesta
+  } catch (error) {
+    console.error("Error fetching posts:", error);
+    res.status(500).json({ error: "Error fetching posts" });
+  }
+});
+
+// Ruta POST para crear un nuevo post
+app.post("/newposts", async (req, res) => {
+  try {
+    // Extraer los campos del cuerpo de la solicitud
+    const { title, data, user_id } = req.body;
+
+    // Llamar a la función para crear un nuevo post en la base de datos
+    const newPost = await createPost(title, data, user_id);
+
+    // Devolver el nuevo post creado como respuesta
+    res.status(201).json(newPost);
+  } catch (error) {
+    // Manejar errores si ocurren durante el proceso de creación del post
+    console.error("Error creating new Post:", error);
+    res.status(500).json({ error: "Error creating new Post" });
+  }
 });
 
 // Iniciar el servidor
