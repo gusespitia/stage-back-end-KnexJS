@@ -1,4 +1,3 @@
-// knexfile.js
 import { fileURLToPath } from "url";
 import { dirname } from "path";
 
@@ -9,10 +8,10 @@ const knexConfig = {
   development: {
     client: "mysql",
     connection: {
-      host: process.env.DB_HOST,
-      user: process.env.DB_USER,
-      password: process.env.DB_PASSWORD,
-      database: process.env.DB_NAME,
+      host: "ID396978_reactApp.db.webhosting.be",
+      user: "ID396978_reactApp",
+      password: "k0Rk95Aq022945918312",
+      database: "ID396978_reactApp",
     },
     migrations: {
       directory: __dirname + "/db/migrations",
