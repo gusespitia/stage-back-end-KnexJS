@@ -54,11 +54,14 @@ export async function postTodo(title) {
   }
 }
 
-// Function to get a specific todo by its id
+
 // Function to get a specific todo by its id
 export async function getAllPostsByUserId(id) {
   try {
-    const posts = await db("posts").select("*").where("user_id", id);
+    const posts = await db("posts")
+      .select("*")
+      .where("user_id", id)
+      .orderBy("id", "desc");
     return posts;
   } catch (error) {
     throw new Error("Error fetching posts:", error);
