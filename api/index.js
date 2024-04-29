@@ -2,8 +2,10 @@ import express from "express";
 import bodyParser from "body-parser";
 import fetch from "node-fetch";
 import mysql from "mysql";
+import fs from "fs";
 import cors from "cors"; // Importa el middleware cors
 import path from "path"; // Importa el mÃ³dulo path
+import { fileURLToPath } from "url";
 import multer from "multer"; // Importa multer para el almacenamiento de archivos
 import { getUsers } from "./userController.js";
 import {
@@ -18,9 +20,10 @@ const app = express();
 const PORT = process.env.PORT || 8020;
 app.use(express.json());
 app.use(bodyParser.json());
-// Permitir solicitudes desde todos los orÃ­genes
+// Permitir solicitudes desde todos los orígenes
 app.use(cors());
 
+// Configurar el middleware CORS para permitir solicitudes desde http://localhost:5173
 app.use(
   cors({
     origin: "http://localhost:5173",
@@ -41,9 +44,10 @@ const dbConfig = {
   user: "ID396978_reactApp",
   password: "k0Rk95Aq022945918312",
   database: "ID396978_reactApp",
-  timeout: 60000, // Establece el tiempo de espera de inactividad en 60 segundos (o el valor que consideres adecuado)
+  timeout: 90000, // Establece el tiempo de espera de inactividad en 60 segundos (o el valor que consideres adecuado)
 };
-
+// Pool de conexiones a la base de datos
+const pool = mysql.createPool(dbConfig);
 // Ruta para obtener todos los usuarios
 app.get("/api/users", async (req, res) => {
   try {
@@ -83,7 +87,25 @@ app.get("/frontuser/:userId", async (req, res) => {
   }
 });
 
-// Route to handle the webhook for user update from Userfront
+// Ruta POST para crear un nuevo post
+app.post("/newposts", async (req, res) => {
+  try {
+    // Extraer los campos del cuerpo de la solicitud
+    const { title, data, user_id } = req.body;
+    console.log(req.body);
+    // Llamar a la función para crear un nuevo post en la base de datos
+    const newPost = await createPost(title, data, user_id);
+    console.log(newPost);
+    // Devolver el nuevo post creado como respuesta
+    res.status(201).json(newPost);
+  } catch (error) {
+    // Manejar errores si ocurren durante el proceso de creación del post
+    console.error("Error creating new Post:", error);
+    res.status(500).json({ error: "Error creating new Post" });
+  }
+});
+
+// Manejo del webhook de Userfront para actualizar roles
 app.post("/userfront/updated/webhook", (req, res) => {
   try {
     const eventData = req.body; // Data received from the Userfront webhook
@@ -93,7 +115,7 @@ app.post("/userfront/updated/webhook", (req, res) => {
     try {
       const connection = mysql.createConnection(dbConfig);
       const query =
-        "UPDATE users SET username = ?, email = ?, phoneNumber = ?, name = ?, image = ?, data = ?, roles = ? WHERE userId = ?";
+        "UPDATE users SET username = ?, email = ?, phoneNumber = ?, name = ?, image = ?, data = ?, roles = ?, isEmailConfirmed = ?, isPhoneNumberConfirmed = ?, isConfirmed = ?, isMfaRequired = ?, preferredFirstFactor = ?, preferredSecondFactor = ?, lastActiveAt = ?, confirmedEmailAt = ?, confirmedPhoneNumberAt = ?, confirmedAt = ?, createdAt = ?, updatedAt = ? WHERE userId = ?";
       const values = [
         eventData.record.username,
         eventData.record.email,
@@ -101,7 +123,19 @@ app.post("/userfront/updated/webhook", (req, res) => {
         eventData.record.name,
         eventData.record.image,
         JSON.stringify(eventData.record.data),
-        eventData.record.roles ? JSON.stringify(eventData.record.roles) : null,
+        roles !== null ? roles : "Student", // Maneja el valor NULL de roles aquí
+        eventData.record.isEmailConfirmed,
+        eventData.record.isPhoneNumberConfirmed,
+        eventData.record.isConfirmed,
+        eventData.record.isMfaRequired,
+        JSON.stringify(eventData.record.preferredFirstFactor),
+        JSON.stringify(eventData.record.preferredSecondFactor),
+        eventData.record.lastActiveAt,
+        eventData.record.confirmedEmailAt,
+        eventData.record.confirmedPhoneNumberAt,
+        eventData.record.confirmedAt,
+        eventData.record.createdAt,
+        eventData.record.updatedAt,
         userId,
       ];
 
@@ -125,7 +159,6 @@ app.post("/userfront/updated/webhook", (req, res) => {
     res.status(500).send("Error handling Userfront webhook");
   }
 });
-
 // Route to handle the webhook for user deletion from Userfront
 app.post("/userfront/delete/webhook", async (req, res) => {
   try {
@@ -190,9 +223,11 @@ app.post("/userfront/webhook", async (req, res) => {
     if (!userfrontResponse.ok) {
       throw new Error("Error fetching user roles from Userfront");
     }
-
+    const userData = req.body;
     // Extrae los roles del usuario de la respuesta
-    const userData = await userfrontResponse.json();
+    // const userData = await userfrontResponse.json();
+    console.log("Contenido de userData:", userData);
+
     const roles =
       userData.authorization &&
       userData.authorization.xbpwd96n &&
@@ -286,13 +321,17 @@ app.get("/todos/:id", async (req, res) => {
 });
 
 // Ruta para actualizar el rol de un usuario
+
+// Ruta para actualizar los roles de usuario
+// Ruta para actualizar los roles de usuario
+// Ruta para actualizar los roles de usuario
 app.put("/updateUserRole/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
     const { roles } = req.body;
 
+    // Realizar la solicitud PUT a la API de Userfront para actualizar los roles
     const url = `https://api.userfront.com/v0/tenants/vbqwm45b/users/${userId}/roles`;
-
     const response = await fetch(url, {
       method: "PUT",
       headers: {
@@ -302,18 +341,36 @@ app.put("/updateUserRole/:userId", async (req, res) => {
       },
       body: JSON.stringify({ roles: roles }),
     });
-
     const responseData = await response.json();
-    console.log(responseData);
 
-    res
-      .status(200)
-      .json({ message: "User role updated successfully", data: responseData });
+    // Actualizar los roles en la base de datos
+    await actualizarRoles(userId, roles);
+
+    // Enviar una respuesta al cliente con el resultado de la actualización de roles
+    res.status(200).json({
+      message: "Rol de usuario actualizado correctamente",
+      data: responseData,
+    });
   } catch (error) {
-    console.error("Error updating user role in Userfront:", error);
-    res.status(500).json({ error: "Error updating user role in Userfront" });
+    console.error("Error al actualizar el rol de usuario:", error);
+    res.status(500).json({ error: "Error al actualizar el rol de usuario" });
   }
 });
+
+// Función para actualizar los roles en la base de datos
+async function actualizarRoles(userId, roles) {
+  try {
+    const updateQuery = `UPDATE users SET roles = ? WHERE userId = ?`;
+    const result = await executeQuery(updateQuery, [roles, userId]);
+    if (result.affectedRows > 0) {
+      console.log("Roles actualizados correctamente en la base de datos");
+    } else {
+      console.log("No se pudo actualizar los roles en la base de datos");
+    }
+  } catch (error) {
+    console.error("Error al actualizar los roles en la base de datos:", error);
+  }
+}
 
 // Ruta para actualizar los datos de un usuario
 app.put("/updateUser/:userId", async (req, res) => {
@@ -386,13 +443,6 @@ const storage = multer.diskStorage({
   },
 });
 
-const upload = multer({ storage: storage });
-
-app.post("/upload", upload.single("image"), (req, res) => {
-  const imageUrl = "/images/" + req.file.filename;
-  res.json({ imageUrl: imageUrl });
-});
-
 // Ruta para obtener todos los posts de un usuario por ID
 app.get("/users/posts/:userId", async (req, res) => {
   try {
@@ -402,24 +452,6 @@ app.get("/users/posts/:userId", async (req, res) => {
   } catch (error) {
     console.error("Error fetching posts:", error);
     res.status(500).json({ error: "Error fetching posts" });
-  }
-});
-
-// Ruta POST para crear un nuevo post
-app.post("/newposts", async (req, res) => {
-  try {
-    // Extraer los campos del cuerpo de la solicitud
-    const { title, data, user_id } = req.body;
-
-    // Llamar a la función para crear un nuevo post en la base de datos
-    const newPost = await createPost(title, data, user_id);
-
-    // Devolver el nuevo post creado como respuesta
-    res.status(201).json(newPost);
-  } catch (error) {
-    // Manejar errores si ocurren durante el proceso de creación del post
-    console.error("Error creating new Post:", error);
-    res.status(500).json({ error: "Error creating new Post" });
   }
 });
 

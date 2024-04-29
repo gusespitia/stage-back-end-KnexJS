@@ -2,8 +2,10 @@ import express from "express";
 import bodyParser from "body-parser";
 import fetch from "node-fetch";
 import mysql from "mysql";
+import fs from "fs";
 import cors from "cors"; // Importa el middleware cors
-import path from "path"; // Importa el mÃ³dulo path
+import { fileURLToPath } from "url";
+import path from "path";
 import multer from "multer"; // Importa multer para el almacenamiento de archivos
 import { getUsers } from "./api/userController.js";
 import {
@@ -386,18 +388,6 @@ const storage = multer.diskStorage({
   },
 });
 
-const upload = multer({ storage: storage });
-
-app.post("/upload", upload.single("image"), (req, res) => {
-  const imageUrl = "/images/" + req.file.filename;
-  res.json({ imageUrl: imageUrl });
-});
-
-// Iniciar el servidor
-app.listen(PORT, () => {
-  console.log(`Servidor escuchando en el puerto ${PORT}`);
-});
-
 // Ruta para obtener todos los posts de un usuario por ID
 app.get("/users/posts/:userId", async (req, res) => {
   try {
@@ -428,4 +418,74 @@ app.post("/newposts", async (req, res) => {
     console.error("Error creating new Post:", error);
     res.status(500).json({ error: "Error creating new Post" });
   }
+});
+// Iniciar el servidor
+app.listen(PORT, () => {
+  console.log(`Servidor escuchando en el puerto ${PORT}`);
+});
+
+const upload = multer({ dest: "uploads/" });
+
+app.post("/images/single", upload.single("imagenPerfil"), (req, res) => {
+  if (!req.file) {
+    return res.status(400).send("No file uploaded.");
+  }
+
+  console.log(req.file);
+
+  // Obtener la ruta y el nombre del archivo guardado
+  const ruta = req.file.path;
+  let nombreArchivo = req.file.originalname;
+
+  // Limpiar el nombre del archivo y agregar un timestamp
+  nombreArchivo = cleanFileName(nombreArchivo);
+
+  // Mover el archivo a la nueva ubicación con el nombre modificado
+  const nuevaRuta = path.join(req.file.destination, nombreArchivo);
+  fs.renameSync(req.file.path, nuevaRuta);
+
+  // Enviar la ruta y el nombre del archivo guardado como respuesta
+  res.json({
+    "esta es la ruta": nuevaRuta,
+    fileName: nombreArchivo,
+  });
+});
+
+function cleanFileName(filename) {
+  // Eliminar espacios en blanco y caracteres especiales del nombre del archivo
+  let cleanedName = filename.trim().replace(/\s+/g, "_");
+
+  // Obtener la extensión del archivo
+  const fileExtension = path.extname(cleanedName);
+
+  // Generar un nuevo nombre de archivo con el formato deseado
+  const timestamp = Date.now(); // Obtener el timestamp actual
+  const randomNumber = Math.floor(Math.random() * 1000); // Generar un número aleatorio
+  const newFileName = `fotoPerfilUser_${timestamp}_${randomNumber}${fileExtension}`;
+
+  return newFileName;
+}
+
+app.post("/images/multi", upload.array("photos", 10), (req, res) => {
+  req.files.map(saveImagen);
+  res.send("Termina multi");
+});
+
+function saveImagen(file) {
+  const newPath = `./uploads/${file.originalname}`;
+  // save the file with the name we want
+  fs.renameSync(file.path, newPath);
+  return newPath;
+}
+
+// OBTENER IMAGENES
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const uploadsDirectory = path.join(__dirname, "uploads");
+
+// Ruta para acceder a las imágenes
+app.get("/images/:filename", (req, res) => {
+  const filename = req.params.filename;
+  res.sendFile(path.join(uploadsDirectory, filename));
 });

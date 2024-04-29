@@ -7,7 +7,7 @@ export async function seed(knex) {
   await knex("posts").del();
   await knex("posts").insert([
     { id: 1, title: "Gus", data: "data example", is_active: "1", user_id: "1" },
-    { id: 2, title: "Gus", data: "data example", is_active: "1", user_id: "1" },
-    { id: 3, title: "Gus", data: "data example", is_active: "1", user_id: "1" },
+    { id: 2, title: "Gus", data: "data example2", is_active: "1", user_id: "2" },
+    { id: 3, title: "Gus", data: "data example3", is_active: "1", user_id: "3" },
   ]);
 }

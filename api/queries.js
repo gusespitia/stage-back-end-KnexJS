@@ -5,16 +5,19 @@ import knexConfig from "../knexfile.js";
 const db = knex(knexConfig["development"]);
 
 // Función para agregar un nuevo post
+// Función para agregar un nuevo post
 export async function createPost(title, data, user_id) {
   try {
-    // Insertar el nuevo post en la base de datos
+    // Insertar el nuevo post en la base de datos utilizando Knex
     const [newPostId] = await db("posts").insert({ title, data, user_id });
 
     // Obtener el nuevo post recién insertado
-    const newPost = await db("posts").where("id", newPostId).first();
+    const newPost = await db("posts").where("user_id", newPostId).first();
 
+    // Devolver el nuevo post
     return newPost;
   } catch (error) {
+    // Manejar errores
     throw new Error("Error adding new Post:", error);
   }
 }
@@ -53,7 +56,6 @@ export async function postTodo(title) {
     throw new Error("Error adding todo:", error);
   }
 }
-
 
 // Function to get a specific todo by its id
 export async function getAllPostsByUserId(id) {
