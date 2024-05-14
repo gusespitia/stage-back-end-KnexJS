@@ -26,7 +26,7 @@ app.use(cors());
 // Configurar el middleware CORS para permitir solicitudes desde http://localhost:5173
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: "https://s13.syntradeveloper.be",
   })
 );
 // // Configurar el middleware CORS para permitir solicitudes desde http://localhost:5173
